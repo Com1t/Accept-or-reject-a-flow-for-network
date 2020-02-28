@@ -1,11 +1,8 @@
-#include <iostream>
-#include <vector>
-#include <cmath>
-#include <climits>
+#include <math.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-using namespace std;
 
 // an ordinary node with val, and pointer to the next
 typedef struct intNode {
@@ -58,10 +55,11 @@ int int_pop(int_headerNode *head) {
 	return val;
 }
 // clear, clears whole list
-void int_clear(int_headerNode *head) {
+int_headerNode* int_clear(int_headerNode *head) {
 	int eles = head->size;
 	for (int i = 0; i < eles; i++)
 		int_pop(head);
+	return head;
 }
 // assign, lhs = rhs
 void int_assign(int_headerNode *lhs, const int_headerNode *rhs) {
@@ -98,8 +96,6 @@ node_int* int_get(const int_headerNode *head, int key)
 	return current;
 }
 
-
-
 // an ordinary node with cotent, and pointer to the next
 typedef struct intlistNode {
 	struct intHeaderNode content;
@@ -113,7 +109,7 @@ typedef struct intlistHeaderNode {
 
 // push will push an element to the tail of the list
 // not using pass by point is in order to create new copy of the content
-void intlist_push(intlist_headerNode *head, intHeaderNode *content) {
+void intlist_push(intlist_headerNode *head, int_headerNode *content) {
 	if (head->size == 0) {	// size 0 need another way to do since headerNode only contains a pointer to node
 		head->first = (node_intlist *)malloc(sizeof(node_intlist));
 		head->first->content.size = 0;
@@ -137,8 +133,8 @@ void intlist_push(intlist_headerNode *head, intHeaderNode *content) {
 	head->size++;
 }
 // pop will remove the last node of the list and return the value of last node
-intHeaderNode intlist_pop(intlist_headerNode *head) {
-	intHeaderNode content = { 0, NULL };
+int_headerNode intlist_pop(intlist_headerNode *head) {
+	int_headerNode content = { 0, NULL };
 	if (head->size == 1) {	// size 1 need another way to do since headerNode only contains a pointer to node
 		content = head->first->content;
 		int_clear(&head->first->content);
@@ -173,17 +169,16 @@ node_intlist* intlist_get(const intlist_headerNode *head, int key)
 	return current;
 }
 
-
-struct dir {
-	int hops = 0;
+typedef struct {
+	int hops;
 	int_headerNode routes;
-};
+} dir;
 
-struct edge_status {
-	float cap = 0;
-	float load = 0;
-	float weight = 0;
-};
+typedef struct {
+	float cap;
+	float load;
+	float weight;
+} edge_status;
 
 int choose(int distance[], int n, int checked[]) {
 	int min = INT_MAX, minIdx = -1;	// to the minimum index
@@ -196,8 +191,8 @@ int choose(int distance[], int n, int checked[]) {
 }
 
 void shortest_route(int **routeDirectory, int startNode, int nodeNumbers, dir* route_exist) {
-	int* checked = new int[nodeNumbers]();
-	int* distance = new int[nodeNumbers]();
+	int* checked = (int*)calloc(nodeNumbers, sizeof(int));
+	int* distance = (int*)calloc(nodeNumbers, sizeof(int));
 	for (int i = 0; i < nodeNumbers; i++) {
 		if (routeDirectory[startNode][i])
 			distance[i] = routeDirectory[startNode][i];
@@ -209,7 +204,7 @@ void shortest_route(int **routeDirectory, int startNode, int nodeNumbers, dir* r
 	checked[startNode] = 1;
 	int_push(&route_exist[startNode].routes, startNode);
 
-	int_headerNode runTime = {0, NULL};
+	int_headerNode runTime = { 0, NULL };
 	int_push(&runTime, startNode);
 
 	for (int i = 0; i < nodeNumbers - 2; i++) {
@@ -225,14 +220,14 @@ void shortest_route(int **routeDirectory, int startNode, int nodeNumbers, dir* r
 			// change 0 3 to 0 1 3
 			int_assign(&runTime, &route_exist[minIdx].routes);
 		}
-		
+
 		checked[minIdx] = 1;
 
 		for (int j = 0; j < nodeNumbers; j++) {
 			if (!checked[j] && distance[minIdx] + routeDirectory[minIdx][j] <= distance[j] && routeDirectory[minIdx][j]) {
 				// the condition "graph[minIdx][j]" is in order to avoid the path that doesn't exist
 				int_push(&runTime, j);
-				if (route_exist[j].routes.size && distance[j] == distance[minIdx] + routeDirectory[minIdx][j]){
+				if (route_exist[j].routes.size && distance[j] == distance[minIdx] + routeDirectory[minIdx][j]) {
 					// if the new distance is equal to original, we examing whole route to see which go through a smaller nodeID
 					for (int k = 0; k < runTime.size - 1; k++) {
 						if (int_get(&runTime, k)->val > int_get(&route_exist[j].routes, k)->val) {
@@ -256,36 +251,62 @@ void shortest_route(int **routeDirectory, int startNode, int nodeNumbers, dir* r
 		}
 		int_pop(&runTime);
 	}
-	int_clear(&runTime);
 	for (int i = 0; i < nodeNumbers; i++)
 		route_exist[i].hops = distance[i];
+	int_clear(&runTime);
+	free(checked);
+	free(distance);
 }
 
-float weight_calculator(edge_status* edge, float loading) {
-	return edge->load / (edge->cap - edge->load);
+float weight_calculator(const edge_status* edge, float loading) {
+	return ((edge->load + loading) / (edge->cap - edge->load - loading));
+}
+
+int linkCap_insuff(edge_status** edgeDir, const int_headerNode *head, float flowSize) {
+	for (int j = 0; j + 1 < head->size; j++) {
+		// if any part of route goes inf we won't go through there
+		if (edgeDir[int_get(head, j)->val][int_get(head, j + 1)->val].cap < (edgeDir[int_get(head, j)->val][int_get(head, j + 1)->val].load + flowSize)) {
+			return 1;
+		}
+	}
+	return 0;
 }
 
 int main() {
 	int nodeNumbers = 0, linkNumbers = 0;
-	cin >> nodeNumbers >> linkNumbers;
+	scanf_s("%d %d", &nodeNumbers, &linkNumbers);
 
-	int** routeDirectory = new int*[nodeNumbers]();
-	for (int i = 0; i < nodeNumbers; i++)
-		routeDirectory[i] = new int[nodeNumbers]();
-
-	edge_status** edgeDirectory = new edge_status*[nodeNumbers]();
-	for (int i = 0; i < nodeNumbers; i++)
-		edgeDirectory[i] = new edge_status[nodeNumbers]();
-
-	dir** neighborMap = new dir*[nodeNumbers]();
-	for (int i = 0; i < nodeNumbers; i++){
-		neighborMap[i] = new dir[nodeNumbers]();
-		for (int j = 0; j < nodeNumbers; j++)
-			neighborMap[i][j].routes = { 0, NULL };
+	int** routeDirectory = (int**)malloc(sizeof(int*)*nodeNumbers);
+	for (int i = 0; i < nodeNumbers; i++) {
+		routeDirectory[i] = (int*)malloc(sizeof(int)*nodeNumbers);
+		for (int j = 0; j < nodeNumbers; j++) {
+			routeDirectory[i][j] = 0;
+		}
 	}
+
+	edge_status** edgeDirectory = (edge_status**)malloc(sizeof(edge_status*)*nodeNumbers);
+	for (int i = 0; i < nodeNumbers; i++) {
+		edgeDirectory[i] = (edge_status*)malloc(sizeof(edge_status)*nodeNumbers);
+		for (int j = 0; j < nodeNumbers; j++) {
+			edgeDirectory[i][j].cap = 0;
+			edgeDirectory[i][j].load = 0;
+			edgeDirectory[i][j].weight = 0;
+		}
+	}
+
+	dir** neighborMap = (dir**)malloc(sizeof(dir*)*nodeNumbers);
+	for (int i = 0; i < nodeNumbers; i++) {
+		neighborMap[i] = (dir*)malloc(sizeof(dir)*nodeNumbers);
+		for (int j = 0; j < nodeNumbers; j++) {
+			neighborMap[i][j].hops = 0;
+			neighborMap[i][j].routes.size = 0;
+			neighborMap[i][j].routes.first = NULL;
+		}
+	}
+
 	for (int i = 0; i < linkNumbers; i++) {
 		int linkID, firstNodeID, secondNodeID, linkCapacity;
-		cin >> linkID >> firstNodeID >> secondNodeID >> linkCapacity;
+		scanf_s("%d %d %d %d", &linkID, &firstNodeID, &secondNodeID, &linkCapacity);
 
 		edgeDirectory[firstNodeID][secondNodeID].cap = linkCapacity;
 		routeDirectory[firstNodeID][secondNodeID] = 1;
@@ -294,39 +315,34 @@ int main() {
 		routeDirectory[secondNodeID][firstNodeID] = 1;
 	}
 
-	cout << endl;
-	for (int i = 0; i < nodeNumbers; i++) {
+	for (int i = 0; i < nodeNumbers; i++)
 		shortest_route(routeDirectory, i, nodeNumbers, neighborMap[i]);
-		cout << "\nFrom " << i << endl;
-		cout << "Distance\tRoute\n";
-		for (int j = 0; j < nodeNumbers; j++) {
-			cout << neighborMap[i][j].hops << "\t\t";
-			for (int k = 0; k < neighborMap[i][j].routes.size; k++)
-				cout << int_get(&neighborMap[i][j].routes, k)->val << " ";
-			cout << endl;
-		}
-		cout << endl;
-	}
 
 	int flowNumbers = 0, total_flow = 0;
-	cin >> flowNumbers;
+	scanf_s("%d", &flowNumbers);
 	intlist_headerNode accepted = { 0, NULL };
 	for (int i = 0; i < flowNumbers; i++) {
+
 		int flowID, firstNodeID, secondNodeID;
 		float flowSize;
-		cin >> flowID >> firstNodeID >> secondNodeID >> flowSize;
+		scanf_s("%d %d %d %f", &flowID, &firstNodeID, &secondNodeID, &flowSize);
 
 		// generating a route and its total weight
 		int best_hops = neighborMap[firstNodeID][0].hops + neighborMap[0][secondNodeID].hops;
 		int_headerNode best_path = { 0, NULL };
 		int_assign(&best_path, &neighborMap[firstNodeID][0].routes);		// copy the first segment
 		for (int j = 1; j < neighborMap[0][secondNodeID].routes.size; j++)
-			int_push( &best_path, int_get(&neighborMap[0][secondNodeID].routes, j)->val);	// copy the second segment
+			int_push(&best_path, int_get(&neighborMap[0][secondNodeID].routes, j)->val);	// copy the second segment
 		float best_weight = 0;
-		for (int j = 0; j + 1 < best_path.size; j++)
-			best_weight += edgeDirectory[int_get(&best_path, j)->val][int_get(&best_path, j+1)->val].weight;
-		
+
+		if (linkCap_insuff(edgeDirectory, &best_path, flowSize))
+			best_weight = INT_MAX;
+		else
+			for (int j = 0; j + 1 < best_path.size; j++)
+				best_weight += edgeDirectory[int_get(&best_path, j)->val][int_get(&best_path, j + 1)->val].weight;
+
 		for (int j = 1; j < nodeNumbers; j++) {
+
 			// generating a route and its total weight
 			int temp_hops = neighborMap[firstNodeID][j].hops + neighborMap[j][secondNodeID].hops;
 			int_headerNode temp_path = { 0, NULL };
@@ -336,8 +352,12 @@ int main() {
 			float temp_weight = 0;
 			for (int j = 0; j + 1 < temp_path.size; j++)
 				temp_weight += edgeDirectory[int_get(&temp_path, j)->val][int_get(&temp_path, j + 1)->val].weight;
+
+			if (linkCap_insuff(edgeDirectory, &temp_path, flowSize))
+				continue;
+
 			// decide a best route by condition of priority from weight, hops, nodeID
-			if (!int_equal(&best_path ,&temp_path)) {
+			if (!int_equal(&best_path, &temp_path)) {
 				if (temp_weight < best_weight) {
 					best_weight = temp_weight;
 					best_hops = temp_hops;
@@ -362,39 +382,43 @@ int main() {
 				}
 			}
 		}
-		int drop = 0;
-		for (int j = 0; j + 1 < best_path.size; j++) {
-			// if any part of route is already inf we won't go through there
-			if (isinf(edgeDirectory[int_get(&best_path, j)->val][int_get(&best_path, j + 1)->val].weight)) {
-				drop = 1;
-				break;
-			}
-		}
+
+		int drop = linkCap_insuff(edgeDirectory, &best_path, flowSize);
 		if (!drop) {
 			total_flow += flowSize;
 			// updating weight here
 			for (int j = 0; j + 1 < best_path.size; j++) {
-				edgeDirectory[int_get(&best_path, j)->val][int_get(&best_path, j + 1)->val].load = flowSize;
 				edgeDirectory[int_get(&best_path, j)->val][int_get(&best_path, j + 1)->val].weight = weight_calculator(&edgeDirectory[int_get(&best_path, j)->val][int_get(&best_path, j + 1)->val], flowSize);
+				edgeDirectory[int_get(&best_path, j)->val][int_get(&best_path, j + 1)->val].load += flowSize;
+				edgeDirectory[int_get(&best_path, j + 1)->val][int_get(&best_path, j)->val].weight = weight_calculator(&edgeDirectory[int_get(&best_path, j + 1)->val][int_get(&best_path, j)->val], flowSize);
+				edgeDirectory[int_get(&best_path, j + 1)->val][int_get(&best_path, j)->val].load += flowSize;
 			}
 			intlist_push(&accepted, &best_path);
 		}
 	}
-	cout << endl;
-	cout << accepted.size << " " << total_flow << endl;
-	for (int i = 0; i < accepted.size; i++){
-		cout << i << " ";
+
+	printf("%d %d\n", accepted.size, total_flow);
+	for (int i = 0; i < accepted.size; i++) {
+		printf("%d", i);
 		for (int k = 0; k < intlist_get(&accepted, i)->content.size; k++)
-			cout << int_get(&intlist_get(&accepted, i)->content, k)->val << " ";
-		cout << endl;
+			printf(" %d", (int_get(&intlist_get(&accepted, i)->content, k)->val));
+		printf("\n");
 	}
-	for (int i = 0; i < nodeNumbers; i++)
-		delete[] edgeDirectory[i];
-	delete[] edgeDirectory;
+
+	for (int i = 0; i < nodeNumbers; i++) {
+		for (int j = 0; j < nodeNumbers; j++)
+			int_clear(&neighborMap[i][j].routes);
+		free(neighborMap[i]);
+	}
+	free(neighborMap);
 
 	for (int i = 0; i < nodeNumbers; i++)
-		delete[] routeDirectory[i];
-	delete[] routeDirectory;
+		free(edgeDirectory[i]);
+	free(edgeDirectory);
+
+	for (int i = 0; i < nodeNumbers; i++)
+		free(routeDirectory[i]);
+	free(routeDirectory);
 
 	return 0;
 }
