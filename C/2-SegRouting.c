@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 // an ordinary node with val, and pointer to the next
 typedef struct intNode {
 	int val;
@@ -14,87 +13,18 @@ typedef struct intHeaderNode {
 	int size;
 	struct intNode *first;
 } int_headerNode;
-
 // push will push an element to the tail of the list
-void int_push(int_headerNode *head, int val) {
-	if (head->size == 0) {	// size 0 need another way to do since headerNode only contains a pointer to node
-		head->first = (node_int *)malloc(sizeof(node_int));
-		head->first->val = val;
-		head->first->next = NULL;
-	}
-	else {
-		node_int *current = head->first;
-		while (current->next != NULL) {
-			current = current->next;	// finding the tail
-		}
-		current->next = (node_int *)malloc(sizeof(node_int));
-		current->next->val = val;
-		current->next->next = NULL;
-	}
-	head->size++;
-}
+void int_push(int_headerNode *head, int val);
 // pop will remove the last node of the list and return the value of last node
-int int_pop(int_headerNode *head) {
-	int val = 0;
-	if (head->size == 1) {	// size 1 need another way to do since headerNode only contains a pointer to node
-		val = head->first->val;
-		free(head->first);
-		head->first = NULL;
-		head->size--;
-	}
-	else if (head->size > 1) {
-		node_int *current = head->first;
-		while (current->next->next != NULL) {
-			current = current->next;	// finding the element before tail
-		}
-		val = current->next->val;
-		free(current->next);
-		current->next = NULL;
-		head->size--;
-	}
-	return val;
-}
+int int_pop(int_headerNode *head);
 // clear, clears whole list
-int_headerNode* int_clear(int_headerNode *head) {
-	int eles = head->size;
-	for (int i = 0; i < eles; i++)
-		int_pop(head);
-	return head;
-}
+int_headerNode* int_clear(int_headerNode *head);
 // assign, lhs = rhs
-void int_assign(int_headerNode *lhs, const int_headerNode *rhs) {
-	int_clear(lhs);
-	node_int *rhsCurrent = rhs->first;
-	while (rhsCurrent != NULL) {
-		int_push(lhs, rhsCurrent->val);
-		rhsCurrent = rhsCurrent->next;
-	}
-}
+void int_assign(int_headerNode *lhs, const int_headerNode *rhs);
 // determine if two lists are equal and return true, otherwise return false
-int int_equal(const int_headerNode *lhs, const int_headerNode *rhs)
-{
-	if (lhs->size != rhs->size)
-		return 0;
-	else {
-		node_int *lhsCurrent = lhs->first;
-		node_int *rhsCurrent = rhs->first;
-		while (lhsCurrent != NULL) {
-			if (lhsCurrent->val != rhsCurrent->val)
-				return 0;
-			lhsCurrent = lhsCurrent->next;
-			rhsCurrent = rhsCurrent->next;
-		}
-		return 1;
-	}
-}
+int int_equal(const int_headerNode *lhs, const int_headerNode *rhs);
 // to access the list like an array
-node_int* int_get(const int_headerNode *head, int key)
-{
-	node_int *current = head->first;
-	for (int i = 0; i < key; i++)
-		current = current->next;
-	return current;
-}
+node_int* int_get(const int_headerNode *head, int key);
 
 // an ordinary node with cotent, and pointer to the next
 typedef struct intlistNode {
@@ -106,68 +36,15 @@ typedef struct intlistHeaderNode {
 	int size;
 	struct intlistNode *first;
 } intlist_headerNode;
-
 // push will push an element to the tail of the list
 // not using pass by point is in order to create new copy of the content
-void intlist_push(intlist_headerNode *head, int_headerNode *content) {
-	if (head->size == 0) {	// size 0 need another way to do since headerNode only contains a pointer to node
-		head->first = (node_intlist *)malloc(sizeof(node_intlist));
-		head->first->content.size = 0;
-		for (int i = 0; i < content->size; i++) {
-			int_push(&head->first->content, int_get(content, i)->val);
-		}
-		head->first->next = NULL;
-	}
-	else {
-		node_intlist *current = head->first;
-		while (current->next != NULL) {
-			current = current->next;	// finding the tail
-		}
-		current->next = (node_intlist *)malloc(sizeof(node_intlist));
-		current->next->content.size = 0;
-		for (int i = 0; i < content->size; i++) {
-			int_push(&current->next->content, int_get(content, i)->val);
-		}
-		current->next->next = NULL;
-	}
-	head->size++;
-}
+void intlist_push(intlist_headerNode *head, int_headerNode *content);
 // pop will remove the last node of the list and return the value of last node
-int_headerNode intlist_pop(intlist_headerNode *head) {
-	int_headerNode content = { 0, NULL };
-	if (head->size == 1) {	// size 1 need another way to do since headerNode only contains a pointer to node
-		content = head->first->content;
-		int_clear(&head->first->content);
-		free(head->first);
-		head->first = NULL;
-	}
-	else if (head->size > 1) {
-		node_intlist *current = head->first;
-		while (current->next->next != NULL) {
-			current = current->next;	// finding the element before tail
-		}
-		content = current->next->content;
-		int_clear(&current->next->content);
-		free(current->next);
-		current->next = NULL;
-	}
-	head->size--;
-	return content;
-}
+int_headerNode intlist_pop(intlist_headerNode *head);
 // clear, clears whole list
-void intlist_clear(intlist_headerNode *head) {
-	int eles = head->size;
-	for (int i = 0; i < eles; i++)
-		intlist_pop(head);
-}
+void intlist_clear(intlist_headerNode *head);
 // to access the list like an array
-node_intlist* intlist_get(const intlist_headerNode *head, int key)
-{
-	node_intlist *current = head->first;
-	for (int i = 0; i < key; i++)
-		current = current->next;
-	return current;
-}
+node_intlist* intlist_get(const intlist_headerNode *head, int key);
 
 typedef struct {
 	int hops;
@@ -180,97 +57,14 @@ typedef struct {
 	float weight;
 } edge_status;
 
-int choose(int distance[], int n, int checked[]) {
-	int min = INT_MAX, minIdx = -1;	// to the minimum index
-	for (int i = 0; i < n; i++)
-		if (distance[i] < min && !checked[i]) {
-			min = distance[i];
-			minIdx = i;
-		}
-	return minIdx;
-}
-
-void shortest_route(int **routeDirectory, int startNode, int nodeNumbers, dir* route_exist) {
-	int* checked = (int*)calloc(nodeNumbers, sizeof(int));
-	int* distance = (int*)calloc(nodeNumbers, sizeof(int));
-	for (int i = 0; i < nodeNumbers; i++) {
-		if (routeDirectory[startNode][i])
-			distance[i] = routeDirectory[startNode][i];
-		else
-			distance[i] = INT_MAX;
-	}
-
-	distance[startNode] = 0;
-	checked[startNode] = 1;
-	int_push(&route_exist[startNode].routes, startNode);
-
-	int_headerNode runTime = { 0, NULL };
-	int_push(&runTime, startNode);
-
-	for (int i = 0; i < nodeNumbers - 2; i++) {
-		int minIdx = choose(distance, nodeNumbers, checked);
-		if (!route_exist[minIdx].routes.size) {
-			// if this route is hasn't been parsed, save it, and identify as parsed(first time)
-			// if this route is result of other route, we don't need to save it again(since they are already saved)
-			// such as if we parse 1 get 0 1 3 route, while we pass 3 get an 0 3, which we don't need it
-			int_push(&runTime, minIdx);
-			int_assign(&route_exist[minIdx].routes, &runTime);
-		}
-		else {
-			// change 0 3 to 0 1 3
-			int_assign(&runTime, &route_exist[minIdx].routes);
-		}
-
-		checked[minIdx] = 1;
-
-		for (int j = 0; j < nodeNumbers; j++) {
-			if (!checked[j] && distance[minIdx] + routeDirectory[minIdx][j] <= distance[j] && routeDirectory[minIdx][j]) {
-				// the condition "graph[minIdx][j]" is in order to avoid the path that doesn't exist
-				int_push(&runTime, j);
-				if (route_exist[j].routes.size && distance[j] == distance[minIdx] + routeDirectory[minIdx][j]) {
-					// if the new distance is equal to original, we examing whole route to see which go through a smaller nodeID
-					for (int k = 0; k < runTime.size - 1; k++) {
-						if (int_get(&runTime, k)->val > int_get(&route_exist[j].routes, k)->val) {
-							break;
-						}
-						else if (int_get(&runTime, k)->val < int_get(&route_exist[j].routes, k)->val) {
-							int_assign(&route_exist[j].routes, &runTime);
-							break;
-						}
-					}
-				}
-				else {
-					// if the new distance is smaller to original, replace it with new one
-					// or it doesn't have an old one, just store it
-					int_assign(&route_exist[j].routes, &runTime);
-				}
-
-				distance[j] = distance[minIdx] + routeDirectory[minIdx][j];
-				int_pop(&runTime);
-			}
-		}
-		int_pop(&runTime);
-	}
-	for (int i = 0; i < nodeNumbers; i++)
-		route_exist[i].hops = distance[i];
-	int_clear(&runTime);
-	free(checked);
-	free(distance);
-}
-
-float weight_calculator(const edge_status* edge, float loading) {
-	return ((edge->load + loading) / (edge->cap - edge->load - loading));
-}
-
-int linkCap_insuff(edge_status** edgeDir, const int_headerNode *head, float flowSize) {
-	for (int j = 0; j + 1 < head->size; j++) {
-		// if any part of route goes inf we won't go through there
-		if (edgeDir[int_get(head, j)->val][int_get(head, j + 1)->val].cap < (edgeDir[int_get(head, j)->val][int_get(head, j + 1)->val].load + flowSize)) {
-			return 1;
-		}
-	}
-	return 0;
-}
+// choose an shortest neighbor
+int choose(int distance[], int n, int checked[]);
+// giving all shortest route
+void shortest_route(int **routeDirectory, int startNode, int nodeNumbers, dir* route_exist);
+// calculating the weight of an edge
+float weight_calculator(const edge_status* edge, float loading);
+// to tell if this path has sufficient capcity
+int linkCap_insuff(edge_status** edgeDir, const int_headerNode *head, float flowSize);
 
 int main() {
 	int nodeNumbers = 0, linkNumbers = 0;
@@ -420,5 +214,236 @@ int main() {
 		free(routeDirectory[i]);
 	free(routeDirectory);
 
+	return 0;
+}
+
+// push will push an element to the tail of the list
+void int_push(int_headerNode *head, int val) {
+	if (head->size == 0) {	// size 0 need another way to do since headerNode only contains a pointer to node
+		head->first = (node_int *)malloc(sizeof(node_int));
+		head->first->val = val;
+		head->first->next = NULL;
+	}
+	else {
+		node_int *current = head->first;
+		while (current->next != NULL) {
+			current = current->next;	// finding the tail
+		}
+		current->next = (node_int *)malloc(sizeof(node_int));
+		current->next->val = val;
+		current->next->next = NULL;
+	}
+	head->size++;
+}
+// pop will remove the last node of the list and return the value of last node
+int int_pop(int_headerNode *head) {
+	int val = 0;
+	if (head->size == 1) {	// size 1 need another way to do since headerNode only contains a pointer to node
+		val = head->first->val;
+		free(head->first);
+		head->first = NULL;
+		head->size--;
+	}
+	else if (head->size > 1) {
+		node_int *current = head->first;
+		while (current->next->next != NULL) {
+			current = current->next;	// finding the element before tail
+		}
+		val = current->next->val;
+		free(current->next);
+		current->next = NULL;
+		head->size--;
+	}
+	return val;
+}
+// clear, clears whole list
+int_headerNode* int_clear(int_headerNode *head) {
+	int eles = head->size;
+	for (int i = 0; i < eles; i++)
+		int_pop(head);
+	return head;
+}
+// assign, lhs = rhs
+void int_assign(int_headerNode *lhs, const int_headerNode *rhs) {
+	int_clear(lhs);
+	node_int *rhsCurrent = rhs->first;
+	while (rhsCurrent != NULL) {
+		int_push(lhs, rhsCurrent->val);
+		rhsCurrent = rhsCurrent->next;
+	}
+}
+// determine if two lists are equal and return true, otherwise return false
+int int_equal(const int_headerNode *lhs, const int_headerNode *rhs) {
+	if (lhs->size != rhs->size)
+		return 0;
+	else {
+		node_int *lhsCurrent = lhs->first;
+		node_int *rhsCurrent = rhs->first;
+		while (lhsCurrent != NULL) {
+			if (lhsCurrent->val != rhsCurrent->val)
+				return 0;
+			lhsCurrent = lhsCurrent->next;
+			rhsCurrent = rhsCurrent->next;
+		}
+		return 1;
+	}
+}
+// to access the list like an array
+node_int* int_get(const int_headerNode *head, int key) {
+	node_int *current = head->first;
+	for (int i = 0; i < key; i++)
+		current = current->next;
+	return current;
+}
+// push will push an element to the tail of the list
+// not using pass by point is in order to create new copy of the content
+void intlist_push(intlist_headerNode *head, int_headerNode *content) {
+	if (head->size == 0) {	// size 0 need another way to do since headerNode only contains a pointer to node
+		head->first = (node_intlist *)malloc(sizeof(node_intlist));
+		head->first->content.size = 0;
+		for (int i = 0; i < content->size; i++) {
+			int_push(&head->first->content, int_get(content, i)->val);
+		}
+		head->first->next = NULL;
+	}
+	else {
+		node_intlist *current = head->first;
+		while (current->next != NULL) {
+			current = current->next;	// finding the tail
+		}
+		current->next = (node_intlist *)malloc(sizeof(node_intlist));
+		current->next->content.size = 0;
+		for (int i = 0; i < content->size; i++) {
+			int_push(&current->next->content, int_get(content, i)->val);
+		}
+		current->next->next = NULL;
+	}
+	head->size++;
+}
+// pop will remove the last node of the list and return the value of last node
+int_headerNode intlist_pop(intlist_headerNode *head) {
+	int_headerNode content = { 0, NULL };
+	if (head->size == 1) {	// size 1 need another way to do since headerNode only contains a pointer to node
+		content = head->first->content;
+		int_clear(&head->first->content);
+		free(head->first);
+		head->first = NULL;
+	}
+	else if (head->size > 1) {
+		node_intlist *current = head->first;
+		while (current->next->next != NULL) {
+			current = current->next;	// finding the element before tail
+		}
+		content = current->next->content;
+		int_clear(&current->next->content);
+		free(current->next);
+		current->next = NULL;
+	}
+	head->size--;
+	return content;
+}
+// clear, clears whole list
+void intlist_clear(intlist_headerNode *head) {
+	int eles = head->size;
+	for (int i = 0; i < eles; i++)
+		intlist_pop(head);
+}
+// to access the list like an array
+node_intlist* intlist_get(const intlist_headerNode *head, int key) {
+	node_intlist *current = head->first;
+	for (int i = 0; i < key; i++)
+		current = current->next;
+	return current;
+}
+// choose an shortest neighbor
+int choose(int distance[], int n, int checked[]) {
+	int min = INT_MAX, minIdx = -1;	// to the minimum index
+	for (int i = 0; i < n; i++)
+		if (distance[i] < min && !checked[i]) {
+			min = distance[i];
+			minIdx = i;
+		}
+	return minIdx;
+}
+// giving all shortest route
+void shortest_route(int **routeDirectory, int startNode, int nodeNumbers, dir* route_exist) {
+	int* checked = (int*)calloc(nodeNumbers, sizeof(int));
+	int* distance = (int*)calloc(nodeNumbers, sizeof(int));
+	for (int i = 0; i < nodeNumbers; i++) {
+		if (routeDirectory[startNode][i])
+			distance[i] = routeDirectory[startNode][i];
+		else
+			distance[i] = INT_MAX;
+	}
+
+	distance[startNode] = 0;
+	checked[startNode] = 1;
+	int_push(&route_exist[startNode].routes, startNode);
+
+	int_headerNode runTime = { 0, NULL };
+	int_push(&runTime, startNode);
+
+	for (int i = 0; i < nodeNumbers - 2; i++) {
+		int minIdx = choose(distance, nodeNumbers, checked);
+		if (!route_exist[minIdx].routes.size) {
+			// if this route is hasn't been parsed, save it, and identify as parsed(first time)
+			// if this route is result of other route, we don't need to save it again(since they are already saved)
+			// such as if we parse 1 get 0 1 3 route, while we pass 3 get an 0 3, which we don't need it
+			int_push(&runTime, minIdx);
+			int_assign(&route_exist[minIdx].routes, &runTime);
+		}
+		else {
+			// change 0 3 to 0 1 3
+			int_assign(&runTime, &route_exist[minIdx].routes);
+		}
+
+		checked[minIdx] = 1;
+
+		for (int j = 0; j < nodeNumbers; j++) {
+			if (!checked[j] && distance[minIdx] + routeDirectory[minIdx][j] <= distance[j] && routeDirectory[minIdx][j]) {
+				// the condition "graph[minIdx][j]" is in order to avoid the path that doesn't exist
+				int_push(&runTime, j);
+				if (route_exist[j].routes.size && distance[j] == distance[minIdx] + routeDirectory[minIdx][j]) {
+					// if the new distance is equal to original, we examing whole route to see which go through a smaller nodeID
+					for (int k = 0; k < runTime.size - 1; k++) {
+						if (int_get(&runTime, k)->val > int_get(&route_exist[j].routes, k)->val) {
+							break;
+						}
+						else if (int_get(&runTime, k)->val < int_get(&route_exist[j].routes, k)->val) {
+							int_assign(&route_exist[j].routes, &runTime);
+							break;
+						}
+					}
+				}
+				else {
+					// if the new distance is smaller to original, replace it with new one
+					// or it doesn't have an old one, just store it
+					int_assign(&route_exist[j].routes, &runTime);
+				}
+
+				distance[j] = distance[minIdx] + routeDirectory[minIdx][j];
+				int_pop(&runTime);
+			}
+		}
+		int_pop(&runTime);
+	}
+	for (int i = 0; i < nodeNumbers; i++)
+		route_exist[i].hops = distance[i];
+	int_clear(&runTime);
+	free(checked);
+	free(distance);
+}
+// calculating the weight of an edge
+float weight_calculator(const edge_status* edge, float loading) {
+	return ((edge->load + loading) / (edge->cap - edge->load - loading));
+}
+// to tell if this path has sufficient capcity
+int linkCap_insuff(edge_status** edgeDir, const int_headerNode *head, float flowSize) {
+	for (int j = 0; j + 1 < head->size; j++) {
+		// if any part of route goes inf we won't go through there
+		if (edgeDir[int_get(head, j)->val][int_get(head, j + 1)->val].cap < (edgeDir[int_get(head, j)->val][int_get(head, j + 1)->val].load + flowSize)) {
+			return 1;
+		}
+	}
 	return 0;
 }
